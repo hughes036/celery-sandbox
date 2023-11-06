@@ -14,7 +14,7 @@ Run test celery consumer (`tasks.py`):
 celery -A tasks worker --loglevel=INFO
 ```
 
-Run test celery producer (`producer.pu`)
+Run test celery producer (`producer.py`)
 ```
 python producer.py
 ```
