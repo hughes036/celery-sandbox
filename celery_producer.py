@@ -1,6 +1,5 @@
-import json
 import time
-from tasks import add, ioBoundTask, cpuBoundTask
+from celigo_pipeline_poc.celery_consumer import add, ioBoundTask, cpuBoundTask
 from functools import reduce
 
 
@@ -24,11 +23,7 @@ def testIoBoundTask(num_jobs=NUM_JOBS_DEFAULT):
         responses.append(ioBoundTask.delay())
 
     results = map(lambda r: r.get(), responses)
-    reduced_result = reduce(
-        _reduce_result,
-        list(results),
-        {}
-    )
+    reduced_result = reduce(_reduce_result, list(results), {})
     # print(json.dumps(reduced_result))
     print(f"{num_jobs} Jobs | Time taken: {time.time() - start}")
 
@@ -40,11 +35,7 @@ def testCpuBoundTask(num_jobs=NUM_JOBS_DEFAULT):
         compute_results.append(cpuBoundTask.delay(5))
 
     results = list(map(lambda r: r.get(), compute_results))
-    reduced_result = reduce(
-        _reduce_result,
-        list(results),
-        {}
-    )
+    reduced_result = reduce(_reduce_result, list(results), {})
     # print(json.dumps(reduced_result))
     print(f"{num_jobs} Jobs | Time taken: {time.time() - start}")
 
@@ -67,6 +58,7 @@ def main():
     print("________Testing CPU bound task________")
     for num_jobs in [10, 50, 100, 200]:
         testCpuBoundTask(num_jobs)
+
 
 if __name__ == "__main__":
     main()
