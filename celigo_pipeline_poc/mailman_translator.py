@@ -6,31 +6,10 @@ from celery_worker import add
 from hamilton_queue_connection import HamiltonQueueConnection, EXCHANGE_HAMILTON, QUEUE_CELL_COUNT, QUEUE_FILE_LIST
 
 
-#########################################
-# Consumer of the message from Hamilton
-def consumeFileListFromHamilton(ch, method, properties, body):
-    print(f"Got a message from Queue C: {body}")
-    file_list = json.loads(body)
-    mock_cell_count = produceFilePathsForCelery(file_list)
-    print(f"Got a cell count of {mock_cell_count}")
-    produceCellCountforHamilton(mock_cell_count)
-
-
-def listenOnFromHamiltonQueue():
-    connection = HamiltonQueueConnection()
-    channel = connection.getChannel()
-    channel.basic_consume(
-        queue=QUEUE_FILE_LIST,
-        on_message_callback=consumeFileListFromHamilton,
-        auto_ack=True,
-    )
-    # this will be command for starting the consumer session
-    channel.start_consuming()
-
 
 #########################################
 # Producer of the message to Celery workers
-def produceFilePathsForCelery(file_list):
+def produceCeleryWork(file_list):
     responses = []
     # Send each file to the celery queue, where this will be processed by the worker(s) concurrently
     for file in file_list:
@@ -46,7 +25,7 @@ def produceFilePathsForCelery(file_list):
 
 #########################################
 # Producer of the message to Hamilton (sends back cell count computed by celery workers)
-def produceCellCountforHamilton(cell_count):
+def produceCellCount(cell_count):
     connection = HamiltonQueueConnection()
     channel = connection.getChannel()
     channel.basic_publish(
@@ -56,9 +35,31 @@ def produceCellCountforHamilton(cell_count):
     )
     channel.close()
 
+    
+#########################################
+# Consumer of the message from Hamilton
+def handleFileList(ch, method, properties, body):
+    print(f"Got a message from Queue C: {body}")
+    file_list = json.loads(body)
+    mock_cell_count = produceCeleryWork(file_list)
+    print(f"Got a cell count of {mock_cell_count}")
+    produceCellCount(mock_cell_count)
+
+
+def consumeFileList():
+    connection = HamiltonQueueConnection()
+    channel = connection.getChannel()
+    channel.basic_consume(
+        queue=QUEUE_FILE_LIST,
+        on_message_callback=handleFileList,
+        auto_ack=True,
+    )
+    # this will be command for starting the consumer session
+    channel.start_consuming()
+
 
 def main():
-    listenOnFromHamiltonQueue()
+    consumeFileList()
 
 
 if __name__ == "__main__":

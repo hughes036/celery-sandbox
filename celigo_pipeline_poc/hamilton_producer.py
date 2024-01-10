@@ -4,11 +4,11 @@ import json
 from hamilton_queue_connection import EXCHANGE_HAMILTON, QUEUE_FILE_LIST, HamiltonQueueConnection
 
 
-def produceFileListForSlurm():
+def produceFileList():
     # This simulates the Venus process putting the inital file list message on a queue
     connection = HamiltonQueueConnection()
     channel = connection.getChannel()
-    
+
     file_list = [
         "/foo/bar/1.tiff",
         "/foo/bar/2.tiff",
@@ -25,7 +25,7 @@ def produceFileListForSlurm():
 
 
 def main():
-    produceFileListForSlurm()
+    produceFileList()
 
 
 if __name__ == "__main__":

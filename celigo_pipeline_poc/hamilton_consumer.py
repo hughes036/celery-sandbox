@@ -7,8 +7,7 @@ def consumeCellCountFromSlum(ch, method, properties, body):
     print(f"Hamilton got cell count message: {json.loads(body)}")
 
 
-def listenOnToHamiltonQueue():
-
+def consumeCellCount():
     connection = HamiltonQueueConnection()
     channel = connection.getChannel()
     channel.basic_consume(
@@ -21,7 +20,7 @@ def listenOnToHamiltonQueue():
 
 
 def main():
-    listenOnToHamiltonQueue()
+    consumeCellCount()
 
 
 if __name__ == "__main__":
