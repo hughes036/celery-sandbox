@@ -1,19 +1,14 @@
 # producer
 import json
-import pika
 
-from hamilton_queue_connection import EXCHANGE_HAMILTON, QUEUE_FILE_LIST
+from hamilton_queue_connection import EXCHANGE_HAMILTON, QUEUE_FILE_LIST, HamiltonQueueConnection
 
 
 def produceFileListForSlurm():
     # This simulates the Venus process putting the inital file list message on a queue
-    credentials = pika.PlainCredentials("guest", "guest")
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host="dev-aics-tfp-002", port=80, credentials=credentials
-        )
-    )
-    channel = connection.channel()
+    connection = HamiltonQueueConnection()
+    channel = connection.getChannel()
+    
     file_list = [
         "/foo/bar/1.tiff",
         "/foo/bar/2.tiff",

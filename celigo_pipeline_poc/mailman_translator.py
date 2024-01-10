@@ -1,10 +1,9 @@
 # consumer
 from functools import reduce
 import json
-import pika
 
 from celery_worker import add
-from hamilton_queue import EXCHANGE_HAMILTON, QUEUE_CELL_COUNT, QUEUE_FILE_LIST
+from hamilton_queue_connection import HamiltonQueueConnection, EXCHANGE_HAMILTON, QUEUE_CELL_COUNT, QUEUE_FILE_LIST
 
 
 #########################################
@@ -18,21 +17,8 @@ def consumeFileListFromHamilton(ch, method, properties, body):
 
 
 def listenOnFromHamiltonQueue():
-    credentials = pika.PlainCredentials("guest", "guest")
-
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host="dev-aics-tfp-002", port=80, credentials=credentials
-        )
-    )
-    channel = connection.channel()
-    channel.exchange_declare(
-        exchange=EXCHANGE_HAMILTON, durable=True, exchange_type="direct"
-    )
-    channel.queue_declare(queue=QUEUE_FILE_LIST, durable=True)
-    channel.queue_bind(
-        exchange=EXCHANGE_HAMILTON, queue=QUEUE_FILE_LIST, routing_key=QUEUE_FILE_LIST
-    )
+    connection = HamiltonQueueConnection()
+    channel = connection.getChannel()
     channel.basic_consume(
         queue=QUEUE_FILE_LIST,
         on_message_callback=consumeFileListFromHamilton,
@@ -61,14 +47,8 @@ def produceFilePathsForCelery(file_list):
 #########################################
 # Producer of the message to Hamilton (sends back cell count computed by celery workers)
 def produceCellCountforHamilton(cell_count):
-    credentials = pika.PlainCredentials("guest", "guest")
-
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host="dev-aics-tfp-002", port=80, credentials=credentials
-        )
-    )
-    channel = connection.channel()
+    connection = HamiltonQueueConnection()
+    channel = connection.getChannel()
     channel.basic_publish(
         exchange=EXCHANGE_HAMILTON,
         routing_key=QUEUE_CELL_COUNT,
