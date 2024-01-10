@@ -1,5 +1,5 @@
 import time
-from celigo_pipeline_poc.celery_consumer import add, ioBoundTask, cpuBoundTask
+from celigo_pipeline_poc.celery_worker import add, ioBoundTask, cpuBoundTask
 from functools import reduce
 
 

@@ -3,7 +3,7 @@ from functools import reduce
 import json
 import pika
 
-from celery_consumer import add
+from celigo_pipeline_poc.celery_worker import add
 
 #########################################
 # Consumer of the message from Hamilton
