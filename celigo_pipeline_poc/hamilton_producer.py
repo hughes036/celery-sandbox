@@ -20,11 +20,11 @@ def produceFileListForSlurm():
                        routing_key="C")
     # messaging to queue named C
     file_list = [
-        "/foo/barr/1.tiff",
-        "/foo/barr/2.tiff",
-        "/foo/barr/3.tiff",
-        "/foo/barr/4.tiff",
-        "/foo/barr/5.tiff",
+        "/foo/bar/1.tiff",
+        "/foo/bar/2.tiff",
+        "/foo/bar/3.tiff",
+        "/foo/bar/4.tiff",
+        "/foo/bar/5.tiff",
     ]
     channel.basic_publish(exchange="test", routing_key="C", body=json.dumps(file_list))
     channel.close()

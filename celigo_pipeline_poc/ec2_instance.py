@@ -5,6 +5,14 @@ import pika
 
 from celery_consumer import add
 
+#########################################
+# Consumer of the message from Hamilton
+def consumeFileListFromHamilton(ch, method, properties, body):
+    print(f"Got a message from Queue C: {body}")
+    file_list = json.loads(body)
+    mock_cell_count = produceFilePathsForCelery(file_list)
+    print(f"Got a cell count of {mock_cell_count}")
+    produceCellCountforHamilton(mock_cell_count)
 
 def listenOnFromHamiltonQueue():
     credentials = pika.PlainCredentials("guest", "guest")
@@ -20,19 +28,16 @@ def listenOnFromHamiltonQueue():
     channel.queue_declare(queue="D")
     channel.basic_consume(
         queue="C",
-        on_message_callback=consumeFileListFromVenus,
+        on_message_callback=consumeFileListFromHamilton,
         auto_ack=True,
     )
     # this will be command for starting the consumer session
     channel.start_consuming()
 
-
-def consumeFileListFromVenus(ch, method, properties, body):
-    # Recieve the message from Venus fileQueue, and deserialize it
-    print(f"Got a message from Queue C: {body}")
-    file_list = json.loads(body)
+#########################################
+# Producer of the message to Celery workers
+def produceFilePathsForCelery(file_list):
     responses = []
-
     # Send each file to the celery queue, where this will be processed by the worker(s) concurrently
     for file in file_list:
         print(f"processing file {file}")
@@ -42,13 +47,11 @@ def consumeFileListFromVenus(ch, method, properties, body):
     print("Waiting for responses")
     results = map(lambda r: r.get(), responses)
     print("Got all responses")
-    mock_cell_count = reduce(lambda x, y: x + y, results)
+    return reduce(lambda x, y: x + y, results)
 
-    print(f"Got a cell count of {mock_cell_count}")
-    produceCellCountforVenus(mock_cell_count)
-
-
-def produceCellCountforVenus(cell_count):
+#########################################
+# Producer of the message to Hamilton (sends back cell count computed by celery workers)
+def produceCellCountforHamilton(cell_count):
     credentials = pika.PlainCredentials("guest", "guest")
 
     connection = pika.BlockingConnection(
