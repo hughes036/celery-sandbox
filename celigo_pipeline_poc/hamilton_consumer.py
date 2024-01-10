@@ -1,6 +1,8 @@
 import json
 import pika
 
+from hamilton_queue import EXCHANGE_HAMILTON, QUEUE_CELL_COUNT
+
 
 def consumeCellCountFromSlum(ch, method, properties, body):
     print(f"Hamilton got cell count message: {json.loads(body)}")
@@ -15,9 +17,14 @@ def listenOnToHamiltonQueue():
         )
     )
     channel = connection.channel()
-    channel.exchange_declare("test", durable=True, exchange_type="topic")
+    channel.exchange_declare(EXCHANGE_HAMILTON, durable=True, exchange_type="direct")
+    channel.queue_declare(queue=QUEUE_CELL_COUNT, durable=True)
+    # TODO works in mailman but not here?
+    channel.queue_bind(
+        exchange=EXCHANGE_HAMILTON, queue=QUEUE_CELL_COUNT, routing_key=QUEUE_CELL_COUNT
+    )
     channel.basic_consume(
-        queue="D",
+        queue=QUEUE_CELL_COUNT,
         on_message_callback=consumeCellCountFromSlum,
         auto_ack=True,
     )

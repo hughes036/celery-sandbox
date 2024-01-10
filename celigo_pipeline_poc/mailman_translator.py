@@ -3,7 +3,9 @@ from functools import reduce
 import json
 import pika
 
-from celigo_pipeline_poc.celery_worker import add
+from celery_worker import add
+from hamilton_queue import EXCHANGE_HAMILTON, QUEUE_CELL_COUNT, QUEUE_FILE_LIST
+
 
 #########################################
 # Consumer of the message from Hamilton
@@ -14,6 +16,7 @@ def consumeFileListFromHamilton(ch, method, properties, body):
     print(f"Got a cell count of {mock_cell_count}")
     produceCellCountforHamilton(mock_cell_count)
 
+
 def listenOnFromHamiltonQueue():
     credentials = pika.PlainCredentials("guest", "guest")
 
@@ -23,16 +26,21 @@ def listenOnFromHamiltonQueue():
         )
     )
     channel = connection.channel()
-    channel.exchange_declare("test", durable=True, exchange_type="topic")
-    channel.queue_declare(queue="C")
-    channel.queue_declare(queue="D")
+    channel.exchange_declare(
+        exchange=EXCHANGE_HAMILTON, durable=True, exchange_type="direct"
+    )
+    channel.queue_declare(queue=QUEUE_FILE_LIST, durable=True)
+    channel.queue_bind(
+        exchange=EXCHANGE_HAMILTON, queue=QUEUE_FILE_LIST, routing_key=QUEUE_FILE_LIST
+    )
     channel.basic_consume(
-        queue="C",
+        queue=QUEUE_FILE_LIST,
         on_message_callback=consumeFileListFromHamilton,
         auto_ack=True,
     )
     # this will be command for starting the consumer session
     channel.start_consuming()
+
 
 #########################################
 # Producer of the message to Celery workers
@@ -47,7 +55,8 @@ def produceFilePathsForCelery(file_list):
     print("Waiting for responses")
     results = map(lambda r: r.get(), responses)
     print("Got all responses")
-    return reduce(lambda x, y: x + y, results)
+    return reduce(lambda x, y: x + y, list(results))
+
 
 #########################################
 # Producer of the message to Hamilton (sends back cell count computed by celery workers)
@@ -60,12 +69,10 @@ def produceCellCountforHamilton(cell_count):
         )
     )
     channel = connection.channel()
-    channel.exchange_declare("hamilton_local", durable=True, exchange_type="topic")
-    channel.queue_declare(queue="test")
-    channel.queue_bind(exchange="test", queue="D", routing_key="D")
-
     channel.basic_publish(
-        exchange="test", routing_key="D", body=json.dumps({"cell_count": cell_count})
+        exchange=EXCHANGE_HAMILTON,
+        routing_key=QUEUE_CELL_COUNT,
+        body=json.dumps({"cell_count": cell_count}),
     )
     channel.close()
 
