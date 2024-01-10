@@ -2,7 +2,7 @@
 import json
 import pika
 
-from hamilton_queue import EXCHANGE_HAMILTON, QUEUE_FILE_LIST
+from hamilton_queue_connection import EXCHANGE_HAMILTON, QUEUE_FILE_LIST
 
 
 def produceFileListForSlurm():
