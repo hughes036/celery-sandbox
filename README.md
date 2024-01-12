@@ -47,5 +47,4 @@ python hamilton_producer.py
 
 Observe the following data flow, and notice how each component is decoupled, achieving a high degree of scalability and flexibility in how the system is architected:
 
-![Alt text](image.png)
-
+![Alt text](celigo_pipeline_poc/diagram.jpg)
